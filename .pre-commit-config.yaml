@@ -1,0 +1,47 @@
+repos:
+#  - repo: https://github.com/Tesla2000/TupleNamer
+#    rev: v0.0.3-alpha
+#    hooks:
+#     - id: tuple_namer
+#       stages: [pre-push]
+  - repo: https://github.com/psf/black
+    rev: 25.12.0
+    hooks:
+      - id: black
+        args: ["--preview", "--line-length", "79"]
+#  - repo: https://github.com/Tesla2000/FunctionSplitter
+#    rev: v0.0.7-alpha
+#    hooks:
+#     - id: function_splitter
+#       stages: [pre-push]
+  - repo: https://github.com/Tesla2000/temp-reorder-python-imports
+    rev: v0.0.1
+    hooks:
+      - id: reorder-python-imports
+        args: [
+          --py37-plus,
+          --py39-plus,
+          --retain-pre-import,
+          'True',
+          --application-directories,
+          "pydantic-frozendict",
+        ]
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        args: [ --remove-all-unused-imports, --in-place ]
+#  - repo: https://github.com/Tesla2000/StaticMarker
+#    rev: v0.0.3-alpha
+#    hooks:
+#     - id: static_marker
+#       stages: [pre-commit]
+#  - repo: https://github.com/Tesla2000/import-rules-enforcer
+#    rev: 'v0.0.14'
+#    hooks:
+#      - id: import_rules_enforcer
+  - repo: https://github.com/pycqa/flake8
+    rev: '7.3.0'
+    hooks:
+      - id: flake8
+        args: [ "--ignore=E203,W503,E501,E704" ]
