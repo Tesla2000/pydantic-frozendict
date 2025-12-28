@@ -1,6 +1,6 @@
 [project]
 name = "pydantic-frozendict"
-version = "0.1.0"
+version = "0.1.1"
 description = "Frozendict that can be used as pydantic field annotation without a need to use arbitrary type"
 authors = [{name = "Tesla2000", email = "fratajczak124@gmail.com"}]
 readme = "README.md"
