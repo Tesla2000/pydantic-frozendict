@@ -1,10 +1,15 @@
 from collections.abc import Mapping
+from types import GenericAlias
 from typing import Any
 from typing import get_args
 from typing import TypeVar
 
 from frozendict import frozendict
+from pydantic._internal._schema_generation_shared import (
+    CallbackGetCoreSchemaHandler,
+)
 from pydantic_core import core_schema
+from pydantic_core.core_schema import AfterValidatorFunctionSchema
 
 K = TypeVar("K")
 V = TypeVar("V", covariant=True)
@@ -12,7 +17,9 @@ V = TypeVar("V", covariant=True)
 
 class PydanticFrozendict(frozendict[K, V]):
     @classmethod
-    def __get_pydantic_core_schema__(cls, source_type, handler):
+    def __get_pydantic_core_schema__(
+        cls, source_type: GenericAlias, handler: CallbackGetCoreSchemaHandler
+    ) -> AfterValidatorFunctionSchema:
         args = get_args(source_type)
         if len(args) == 2:
             key_schema = handler.generate_schema(args[0])
@@ -26,7 +33,7 @@ class PydanticFrozendict(frozendict[K, V]):
                 return dict(value)
             return value
 
-        def _to_frozendict(value: Any):
+        def _to_frozendict(value: Any) -> "PydanticFrozendict[Any, Any]":
             return cls(value)
 
         dict_schema = core_schema.dict_schema(key_schema, value_schema)
