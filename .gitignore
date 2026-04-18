@@ -7,3 +7,6 @@
 *__pycache__
 /docs/build/
 /.run/
+/junit.xml
+/coverage.xml
+/.coverage

@@ -39,3 +39,10 @@ jobs:
 
       - name: Push bump commit
         run: git push origin main
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to PyPI
+        run: uv publish --token ${{ secrets.PYPI_API_TOKEN }}
+

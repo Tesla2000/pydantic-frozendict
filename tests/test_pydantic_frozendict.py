@@ -1,16 +1,18 @@
+import json
 from collections.abc import Iterator
 from collections.abc import Mapping
 from typing import Any
-from unittest import TestCase
 
+import pytest
 from frozendict import frozendict
 from pydantic import BaseModel
 from pydantic import ValidationError
 from pydantic_frozendict import PydanticFrozendict
 
 
-class TestPydanticFrozendict(TestCase):
-    def setUp(self) -> None:
+class TestPydanticFrozendict:
+    @pytest.fixture(autouse=True)
+    def setup(self) -> None:
         class Foo(BaseModel):
             dictionary: PydanticFrozendict[str, int]
 
@@ -18,21 +20,21 @@ class TestPydanticFrozendict(TestCase):
 
     def test_field_is_pydantic_frozendict(self) -> None:
         foo = self.Foo(dictionary={"a": 1})
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
 
     def test_immutable(self) -> None:
         foo = self.Foo(dictionary={"a": 1})
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             foo.dictionary["b"] = 2  # type: ignore[index]
 
     def test_dict_input_converted(self) -> None:
         foo = self.Foo(dictionary={"a": 1, "b": 2})
-        self.assertEqual(foo.dictionary, PydanticFrozendict({"a": 1, "b": 2}))
+        assert foo.dictionary == PydanticFrozendict({"a": 1, "b": 2})
 
     def test_frozendict_input(self) -> None:
         foo = self.Foo(dictionary=frozendict({"a": 1}))
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
-        self.assertEqual(foo.dictionary["a"], 1)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+        assert foo.dictionary["a"] == 1
 
     def test_custom_mapping_input(self) -> None:
         class CustomMapping(Mapping[str, int]):
@@ -49,60 +51,59 @@ class TestPydanticFrozendict(TestCase):
                 return len(self._data)
 
         foo = self.Foo(dictionary=CustomMapping({"a": 1}))
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
-        self.assertEqual(foo.dictionary["a"], 1)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+        assert foo.dictionary["a"] == 1
 
     def test_invalid_key_type_raises_validation_error(self) -> None:
         class Foo(BaseModel):
             dictionary: PydanticFrozendict[int, str]
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             Foo(dictionary={"not_an_int": "value"})
 
     def test_invalid_value_type_raises_validation_error(self) -> None:
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.Foo(dictionary={"a": "not_an_int"})
 
     def test_non_mapping_input_raises_validation_error(self) -> None:
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.Foo(dictionary="not_a_mapping")
 
     def test_empty_dict(self) -> None:
         foo = self.Foo(dictionary={})
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
-        self.assertEqual(len(foo.dictionary), 0)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+        assert len(foo.dictionary) == 0
 
     def test_untyped_accepts_any_keys_and_values(self) -> None:
         class Foo(BaseModel):
             dictionary: PydanticFrozendict[Any, Any]
 
         foo = Foo(dictionary={"a": 1, "b": [3, 4]})
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
 
     def test_value_coercion(self) -> None:
         foo = self.Foo(dictionary={"a": "5"})
-        self.assertEqual(foo.dictionary["a"], 5)
+        assert foo.dictionary["a"] == 5
 
     def test_model_validate(self) -> None:
         foo = self.Foo.model_validate({"dictionary": {"a": 1}})
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
-        self.assertEqual(foo.dictionary["a"], 1)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+        assert foo.dictionary["a"] == 1
 
     def test_model_dump(self) -> None:
         foo = self.Foo(dictionary={"a": 1})
-        dumped = foo.model_dump()
-        self.assertEqual(dumped["dictionary"], {"a": 1})
+        assert foo.model_dump()["dictionary"] == {"a": 1}
 
     def test_model_validate_json(self) -> None:
         foo = self.Foo.model_validate_json('{"dictionary": {"a": 1}}')
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
-        self.assertEqual(foo.dictionary["a"], 1)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+        assert foo.dictionary["a"] == 1
 
     def test_model_dump_json(self) -> None:
         foo = self.Foo(dictionary={"a": 1})
         json_str = foo.model_dump_json()
-        self.assertIn('"dictionary"', json_str)
-        self.assertIn('"a"', json_str)
+        assert '"dictionary"' in json_str
+        assert '"a"' in json_str
 
     def test_nested_pydantic_model_values(self) -> None:
         class Bar(BaseModel):
@@ -112,18 +113,41 @@ class TestPydanticFrozendict(TestCase):
             dictionary: PydanticFrozendict[str, Bar]
 
         foo = Foo(dictionary={"x": Bar(value=42)})
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
-        self.assertEqual(foo.dictionary["x"].value, 42)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+        assert foo.dictionary["x"].value == 42
 
     def test_multiple_entries(self) -> None:
         data = {str(i): i for i in range(10)}
         foo = self.Foo(dictionary=data)
-        self.assertEqual(len(foo.dictionary), 10)
-        self.assertTrue(all(foo.dictionary[k] == v for k, v in data.items()))
+        assert len(foo.dictionary) == 10
+        assert all(foo.dictionary[k] == v for k, v in data.items())
 
 
-class TestPydanticFrozendictUntyped(TestCase):
-    def setUp(self) -> None:
+class TestPydanticFrozendictNoTypeArgs:
+    @pytest.fixture(autouse=True)
+    def setup(self) -> None:
+        class Foo(BaseModel):
+            dictionary: PydanticFrozendict  # type: ignore[type-arg]
+
+        self.Foo = Foo
+
+    def test_no_type_args_accepts_any_input(self) -> None:
+        foo = self.Foo(dictionary={"a": 1, "b": "hello"})
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+
+    def test_no_type_args_frozendict_input(self) -> None:
+        foo = self.Foo(dictionary=frozendict({"x": [1, 2, 3]}))
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+        assert foo.dictionary["x"] == [1, 2, 3]
+
+    def test_no_type_args_non_mapping_raises(self) -> None:
+        with pytest.raises(ValidationError):
+            self.Foo(dictionary=42)
+
+
+class TestPydanticFrozendictUntyped:
+    @pytest.fixture(autouse=True)
+    def setup(self) -> None:
         class Foo(BaseModel):
             dictionary: PydanticFrozendict[Any, Any]
 
@@ -131,43 +155,43 @@ class TestPydanticFrozendictUntyped(TestCase):
 
     def test_untyped_dict_input(self) -> None:
         foo = self.Foo(dictionary={"a": 1, "b": "hello"})
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
 
     def test_untyped_frozendict_input(self) -> None:
         foo = self.Foo(dictionary=frozendict({"x": [1, 2, 3]}))
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
-        self.assertEqual(foo.dictionary["x"], [1, 2, 3])
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+        assert foo.dictionary["x"] == [1, 2, 3]
 
     def test_untyped_preserves_value_types_without_coercion(self) -> None:
         foo = self.Foo(dictionary={"int": 1, "str": "s", "list": [1, 2]})
-        self.assertIsInstance(foo.dictionary["int"], int)
-        self.assertIsInstance(foo.dictionary["str"], str)
-        self.assertIsInstance(foo.dictionary["list"], list)
+        assert isinstance(foo.dictionary["int"], int)
+        assert isinstance(foo.dictionary["str"], str)
+        assert isinstance(foo.dictionary["list"], list)
 
     def test_untyped_list_of_tuples_raises_validation_error(self) -> None:
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.Foo(dictionary=[("a", 1), ("b", 2)])
 
     def test_untyped_non_mapping_raises_validation_error(self) -> None:
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.Foo(dictionary=42)
 
     def test_untyped_model_dump_returns_plain_dict(self) -> None:
         foo = self.Foo(dictionary={"a": 1})
         dumped = foo.model_dump()
-        self.assertIsInstance(dumped["dictionary"], dict)
-        self.assertNotIsInstance(dumped["dictionary"], frozendict)
+        assert isinstance(dumped["dictionary"], dict)
+        assert not isinstance(dumped["dictionary"], frozendict)
 
     def test_untyped_model_dump_json_and_validate_round_trip(self) -> None:
         foo = self.Foo(dictionary={"a": 1, "b": 2})
-        json_str = foo.model_dump_json()
-        restored = self.Foo.model_validate_json(json_str)
-        self.assertIsInstance(restored.dictionary, PydanticFrozendict)
-        self.assertEqual(dict(restored.dictionary), {"a": 1, "b": 2})
+        restored = self.Foo.model_validate_json(foo.model_dump_json())
+        assert isinstance(restored.dictionary, PydanticFrozendict)
+        assert dict(restored.dictionary) == {"a": 1, "b": 2}
 
 
-class TestPydanticFrozendictFrozendictInput(TestCase):
-    def setUp(self) -> None:
+class TestPydanticFrozendictFrozendictInput:
+    @pytest.fixture(autouse=True)
+    def setup(self) -> None:
         class Foo(BaseModel):
             dictionary: PydanticFrozendict[str, int]
 
@@ -177,48 +201,50 @@ class TestPydanticFrozendictFrozendictInput(TestCase):
         self,
     ) -> None:
         foo = self.Foo(dictionary=frozendict({"a": 1}))
-        self.assertIsInstance(foo.dictionary, PydanticFrozendict)
-        self.assertNotEqual(type(foo.dictionary), frozendict)
+        assert isinstance(foo.dictionary, PydanticFrozendict)
+        assert type(foo.dictionary) is not frozendict
 
     def test_frozendict_values_are_validated(self) -> None:
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.Foo(dictionary=frozendict({"a": "not_an_int"}))
 
     def test_frozendict_value_coercion(self) -> None:
         foo = self.Foo(dictionary=frozendict({"a": "5"}))
-        self.assertEqual(foo.dictionary["a"], 5)
+        assert foo.dictionary["a"] == 5
 
     def test_frozendict_preserves_all_entries(self) -> None:
         data = frozendict({"x": 10, "y": 20, "z": 30})
         foo = self.Foo(dictionary=data)
-        self.assertEqual(dict(foo.dictionary), dict(data))
+        assert dict(foo.dictionary) == dict(data)
 
 
-class TestPydanticFrozendictListOfTuples(TestCase):
-    def setUp(self) -> None:
+class TestPydanticFrozendictListOfTuples:
+    @pytest.fixture(autouse=True)
+    def setup(self) -> None:
         class Foo(BaseModel):
             dictionary: PydanticFrozendict[str, int]
 
         self.Foo = Foo
 
     def test_list_of_tuples_raises_validation_error(self) -> None:
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.Foo(dictionary=[("a", 1), ("b", 2)])
 
     def test_untyped_list_of_tuples_raises_validation_error(self) -> None:
         class Foo(BaseModel):
             dictionary: PydanticFrozendict[Any, Any]
 
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             Foo(dictionary=[("a", 1)])
 
     def test_empty_list_raises_validation_error(self) -> None:
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             self.Foo(dictionary=[])
 
 
-class TestPydanticFrozendictSerialization(TestCase):
-    def setUp(self) -> None:
+class TestPydanticFrozendictSerialization:
+    @pytest.fixture(autouse=True)
+    def setup(self) -> None:
         class Foo(BaseModel):
             dictionary: PydanticFrozendict[str, int]
 
@@ -227,28 +253,26 @@ class TestPydanticFrozendictSerialization(TestCase):
     def test_model_dump_value_is_plain_dict(self) -> None:
         foo = self.Foo(dictionary={"a": 1})
         dumped = foo.model_dump()
-        self.assertIsInstance(dumped["dictionary"], dict)
-        self.assertNotIsInstance(dumped["dictionary"], frozendict)
+        assert isinstance(dumped["dictionary"], dict)
+        assert not isinstance(dumped["dictionary"], frozendict)
 
     def test_model_dump_preserves_entries(self) -> None:
         foo = self.Foo(dictionary={"a": 1, "b": 2})
-        self.assertEqual(foo.model_dump()["dictionary"], {"a": 1, "b": 2})
+        assert foo.model_dump()["dictionary"] == {"a": 1, "b": 2}
 
     def test_model_dump_json_is_valid_json_object(self) -> None:
-        import json
-
         foo = self.Foo(dictionary={"a": 1})
         parsed = json.loads(foo.model_dump_json())
-        self.assertEqual(parsed["dictionary"], {"a": 1})
+        assert parsed["dictionary"] == {"a": 1}
 
     def test_json_round_trip_produces_pydantic_frozendict(self) -> None:
         foo = self.Foo(dictionary={"a": 1, "b": 2})
         restored = self.Foo.model_validate_json(foo.model_dump_json())
-        self.assertIsInstance(restored.dictionary, PydanticFrozendict)
-        self.assertEqual(dict(restored.dictionary), {"a": 1, "b": 2})
+        assert isinstance(restored.dictionary, PydanticFrozendict)
+        assert dict(restored.dictionary) == {"a": 1, "b": 2}
 
     def test_model_dump_then_validate_round_trip(self) -> None:
         foo = self.Foo(dictionary={"a": 1, "b": 2})
         restored = self.Foo.model_validate(foo.model_dump())
-        self.assertIsInstance(restored.dictionary, PydanticFrozendict)
-        self.assertEqual(dict(restored.dictionary), {"a": 1, "b": 2})
+        assert isinstance(restored.dictionary, PydanticFrozendict)
+        assert dict(restored.dictionary) == {"a": 1, "b": 2}

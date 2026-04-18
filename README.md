@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/Tesla2000/pydantic-frozendict/branch/main/graph/badge.svg)](https://codecov.io/gh/Tesla2000/pydantic-frozendict)
+
 # pydantic-frozendict
 
 Frozendict that can be used as pydantic field annotation without a need to use arbitrary type.
