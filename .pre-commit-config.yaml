@@ -35,7 +35,7 @@ repos:
     rev: v1.20.0
     hooks:
       - id: mypy
-        exclude: \.pyi$
+        exclude: (tests|\.pyi$)
         additional_dependencies:
           - pydantic>=2.8.2
           - frozendict

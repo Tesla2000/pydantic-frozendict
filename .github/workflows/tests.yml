@@ -24,8 +24,13 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --group test
 
       - name: Run tests
         run: |
-          timeout 69 uv run python -m unittest
+          timeout 69 uv run python -m pytest --cov --cov-report=term-missing --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

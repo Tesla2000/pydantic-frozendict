@@ -26,8 +26,19 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourname/pydantic-frozendict"
-Issues = "https://github.com/yourname/pydantic-frozendict/issues"
+Homepage = "https://github.com/Tesla2000/pydantic-frozendict"
+Issues = "https://github.com/Tesla2000/pydantic-frozendict/issues"
+Coverage = "https://codecov.io/gh/Tesla2000/pydantic-frozendict"
+
+[tool.coverage.run]
+branch = true
+source = ["pydantic_frozendict"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = true
+
 
 [build-system]
 requires = ["hatchling"]
@@ -44,6 +55,10 @@ dev = [
 packaging = [
     "build>=1.3.0",
     "twine>=6.2.0",
+]
+test = [
+    "pytest>=8.4.2",
+    "pytest-cov>=7.1.0",
 ]
 
 [tool.mypy]
